@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Games Collection</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+      color: #fff;
+      text-align: center;
+    }
+
+    header {
+      padding: 2rem;
+    }
+
+    main.games-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 2rem;
+      padding: 1rem;
+    }
+
+    .game-card {
+      background-color: #ffffff15;
+      border-radius: 12px;
+      padding: 1rem;
+      width: 250px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+      transition: transform 0.3s ease;
+    }
+
+    .game-card:hover {
+      transform: scale(1.05);
+    }
+
+    .game-card img {
+      width: 100%;
+      border-radius: 10px;
+      margin-bottom: 0.5rem;
+    }
+
+    button {
+      background-color: #00c6ff;
+      border: none;
+      color: white;
+      padding: 0.6rem 1.2rem;
+      font-size: 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    button:hover {
+      background-color: #0077b6;
+    }
+
+    footer {
+      margin-top: 3rem;
+      padding: 1rem;
+      background: #00000040;
+      font-size: 0.9rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>  GAMES FOR HUMANS ONLY!!!</h1>
+    <p>Explore all the games I've built. Click to play!</p>
+  </header>
+
+  <main class="games-grid">
+    <div class="game-card">
+      <h2>Tic Tac Toe</h2>
+      <a href="game.html" target="_blank">
+        <img src="tic.jpg" alt="Tic Tac Toe Screenshot"/>
+        <button>Play Now</button>
+      </a>
+    </div>
+<!-- Add more game cards below -->
+     <div class="game-card">
+      <h2>HANG MAN</h2>
+      <a href="hangman.html" target="_blank">
+        <img src="hangman.png" alt="Tic Tac Toe Screenshot" />
+        <button>Play Now</button>
+      </a>
+    </div>
+<!-- Add more game cards below -->
+   <div class="game-card">
+      <h2>2048</h2>
+      <a href="2048.html" target="_blank">
+        <img src="2048.png" alt="Tic Tac Toe Screenshot" />
+        <button>Play Now</button></a>
+</div>
+<!-- Add more game cards below -->
+    <div class="game-card">
+      <h2>LANDMINE</h2>
+      <a href="landmine.html" target="_blank">
+        <img src="landmine.png" alt="Tic Tac Toe Screenshot"/>
+        <button>Play Now</button>
+      </a>
+    </div>
+<!-- Add more game cards below -->
+         <div class="game-card">
+      <h2>LANDMINE</h2>
+      <a href="snake.html" target="_blank">
+        <img src=".png" alt="Tic Tac Toe Screenshot"/>
+        <button>Play Now</button>
+      </a>
+    </div>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 My Game Studio</p>
+  </footer>
+</body>
+</html>

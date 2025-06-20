@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hangman Game</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #1c92d2, #f2fcfe);
+      color: #333;
+      text-align: center;
+      padding: 40px;
+    }
+    h1 {
+      font-size: 2.5em;
+      margin-bottom: 10px;
+    }
+    #canvas {
+      border: 2px solid #444;
+      margin: 20px auto;
+      background: #fff;
+    }
+    #word {
+      font-size: 2em;
+      letter-spacing: 10px;
+      margin: 20px 0;
+    }
+    #hint {
+      font-style: italic;
+      margin-bottom: 10px;
+    }
+    #letters {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 600px;
+      margin: 20px auto;
+    }
+    .letter {
+      background-color: #1c92d2;
+      color: white;
+      border: none;
+      margin: 5px;
+      padding: 10px 15px;
+      font-size: 1.2em;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .letter:hover {
+      background-color: #155a8a;
+    }
+    .letter:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
+    }
+    #message {
+      font-size: 1.5em;
+      margin-top: 20px;
+      color: #d32f2f;
+    }
+    #restartBtn {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 1em;
+      background-color: #1c92d2;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #restartBtn:hover {
+      background-color: #155a8a;
+    }
+  </style>
+</head>
+<body>
+  <h1>Hangman Game</h1>
+  <canvas id="canvas" width="200" height="250"></canvas>
+  <p id="hint"></p>
+  <p id="word"></p>
+  <div id="letters"></div>
+  <p id="message"></p>
+  <button id="restartBtn" onclick="startGame()">Restart Game</button>
+
+  <script>
+    const wordList = [
+      { word: "JAVASCRIPT", hint: "Programming language for web" },
+      { word: "PYTHON", hint: "Snake or a programming language" },
+      { word: "NOTEBOOK", hint: "Used for writing or coding" },
+      { word: "PROGRAM", hint: "A set of instructions for a computer" },
+      { word: "HANGMAN", hint: "The name of this game" }
+    ];
+
+    let chosenWord = "";
+    let hint = "";
+    let displayWord = [];
+    let incorrectGuesses = 0;
+    const maxGuesses = 6;
+
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+
+    function drawHangman(stage) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.lineWidth = 2;
+
+      // Base
+      if (stage > 0) {
+        ctx.beginPath(); ctx.moveTo(10, 240); ctx.lineTo(190, 240); ctx.stroke();
+      }
+      // Pole
+      if (stage > 1) {
+        ctx.beginPath(); ctx.moveTo(50, 240); ctx.lineTo(50, 20); ctx.stroke();
+      }
+      // Top bar
+      if (stage > 2) {
+        ctx.beginPath(); ctx.moveTo(50, 20); ctx.lineTo(150, 20); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(150, 20); ctx.lineTo(150, 50); ctx.stroke();
+      }
+      // Head
+      if (stage > 3) {
+        ctx.beginPath(); ctx.arc(150, 70, 20, 0, Math.PI * 2); ctx.stroke();
+      }
+      // Body
+      if (stage > 4) {
+        ctx.beginPath(); ctx.moveTo(150, 90); ctx.lineTo(150, 150); ctx.stroke();
+      }
+      // Arms and Legs
+      if (stage > 5) {
+        ctx.beginPath(); ctx.moveTo(150, 100); ctx.lineTo(120, 130); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(150, 100); ctx.lineTo(180, 130); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(150, 150); ctx.lineTo(130, 200); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(150, 150); ctx.lineTo(170, 200); ctx.stroke();
+      }
+    }
+
+    function startGame() {
+      const random = wordList[Math.floor(Math.random() * wordList.length)];
+      chosenWord = random.word;
+      hint = random.hint;
+      displayWord = Array(chosenWord.length).fill("_");
+      incorrectGuesses = 0;
+      document.getElementById("message").textContent = "";
+      document.getElementById("word").textContent = displayWord.join(" ");
+      document.getElementById("hint").textContent = "Hint: " + hint;
+      drawLetters();
+      drawHangman(0);
+    }
+
+    function drawLetters() {
+      const lettersDiv = document.getElementById("letters");
+      lettersDiv.innerHTML = "";
+      for (let i = 65; i <= 90; i++) {
+        const letter = String.fromCharCode(i);
+        const btn = document.createElement("button");
+        btn.classList.add("letter");
+        btn.textContent = letter;
+        btn.onclick = () => guessLetter(letter, btn);
+        lettersDiv.appendChild(btn);
+      }
+    }
+
+    function guessLetter(letter, btn) {
+      btn.disabled = true;
+      if (chosenWord.includes(letter)) {
+        for (let i = 0; i < chosenWord.length; i++) {
+          if (chosenWord[i] === letter) {
+            displayWord[i] = letter;
+          }
+        }
+        document.getElementById("word").textContent = displayWord.join(" ");
+        if (!displayWord.includes("_")) {
+          endGame("?? You Win!");
+        }
+      } else {
+        incorrectGuesses++;
+        drawHangman(incorrectGuesses);
+        if (incorrectGuesses >= maxGuesses) {
+          endGame(`?? You Lost! Word was: ${chosenWord}`);
+        }
+      }
+    }
+
+    function endGame(msg) {
+      document.getElementById("message").textContent = msg;
+      document.querySelectorAll(".letter").forEach(btn => btn.disabled = true);
+    }
+
+    startGame();
+  </script>
+</body>
+</html>

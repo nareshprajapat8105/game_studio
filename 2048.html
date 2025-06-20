@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>2048 Game</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      background-color: #faf8ef;
+    }
+    h1 {
+      margin: 20px 0;
+      font-size: 48px;
+      color: #776e65;
+    }
+    #game {
+      width: 400px;
+      height: 400px;
+      margin: 20px auto;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-gap: 10px;
+      background: #bbada0;
+      padding: 10px;
+      border-radius: 10px;
+    }
+    .cell {
+      width: 90px;
+      height: 90px;
+      background: #cdc1b4;
+      font-size: 32px;
+      line-height: 90px;
+      font-weight: bold;
+      color: #776e65;
+      border-radius: 5px;
+    }
+    button {
+      margin: 20px;
+      padding: 10px 20px;
+      font-size: 18px;
+      border: none;
+      border-radius: 6px;
+      background-color: #2ecc71;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #27ae60;
+    }
+    #game-over {
+      font-size: 24px;
+      color: red;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h1>2048</h1>
+  <button onclick="restartGame()">?? Restart Game</button>
+  <div id="game"></div>
+  <div id="game-over"></div>
+  <p>Use your keyboard arrow keys to play.</p>
+
+  <script>
+    const boardSize = 4;
+    let board = [];
+
+    function init() {
+      board = Array(boardSize).fill().map(() => Array(boardSize).fill(0));
+      addNewTile();
+      addNewTile();
+      drawBoard();
+      document.getElementById("game-over").textContent = "";
+    }
+
+    function restartGame() {
+      init();
+    }
+
+    function addNewTile() {
+      let options = [];
+      for (let r = 0; r < boardSize; r++) {
+        for (let c = 0; c < boardSize; c++) {
+          if (board[r][c] === 0) options.push({ r, c });
+        }
+      }
+      if (options.length === 0) return;
+      let spot = options[Math.floor(Math.random() * options.length)];
+      board[spot.r][spot.c] = Math.random() < 0.9 ? 2 : 4;
+    }
+
+    function drawBoard() {
+      const game = document.getElementById("game");
+      game.innerHTML = "";
+      for (let r = 0; r < boardSize; r++) {
+        for (let c = 0; c < boardSize; c++) {
+          const cell = document.createElement("div");
+          cell.className = "cell";
+          cell.textContent = board[r][c] === 0 ? "" : board[r][c];
+          cell.style.background = getTileColor(board[r][c]);
+          game.appendChild(cell);
+        }
+      }
+    }
+
+    function getTileColor(value) {
+      const colors = {
+        0: "#cdc1b4",
+        2: "#eee4da",
+        4: "#ede0c8",
+        8: "#f2b179",
+        16: "#f59563",
+        32: "#f67c5f",
+        64: "#f65e3b",
+        128: "#edcf72",
+        256: "#edcc61",
+        512: "#edc850",
+        1024: "#edc53f",
+        2048: "#edc22e"
+      };
+      return colors[value] || "#3c3a32";
+    }
+
+    function slide(row) {
+      row = row.filter(val => val);
+      for (let i = 0; i < row.length - 1; i++) {
+        if (row[i] === row[i + 1]) {
+          row[i] *= 2;
+          row[i + 1] = 0;
+        }
+      }
+      return row.filter(val => val).concat(Array(boardSize - row.filter(val => val).length).fill(0));
+    }
+
+    function rotateClockwise() {
+      const newBoard = Array(boardSize).fill().map(() => Array(boardSize).fill(0));
+      for (let r = 0; r < boardSize; r++) {
+        for (let c = 0; c < boardSize; c++) {
+          newBoard[c][boardSize - 1 - r] = board[r][c];
+        }
+      }
+      board = newBoard;
+    }
+
+    function move(direction) {
+      for (let i = 0; i < direction; i++) rotateClockwise();
+      let changed = false;
+      for (let r = 0; r < boardSize; r++) {
+        const original = [...board[r]];
+        board[r] = slide(board[r]);
+        if (!changed && original.toString() !== board[r].toString()) changed = true;
+      }
+      for (let i = direction; i < 4; i++) rotateClockwise();
+      if (changed) {
+        addNewTile();
+        drawBoard();
+        if (checkGameOver()) {
+          document.getElementById("game-over").textContent = "Game Over ??";
+        }
+      }
+    }
+
+    function checkGameOver() {
+      for (let r = 0; r < boardSize; r++) {
+        for (let c = 0; c < boardSize; c++) {
+          if (board[r][c] === 0) return false;
+          if (c !== boardSize - 1 && board[r][c] === board[r][c + 1]) return false;
+          if (r !== boardSize - 1 && board[r][c] === board[r + 1][c]) return false;
+        }
+      }
+      return true;
+    }
+
+    window.addEventListener("keydown", e => {
+      if (document.getElementById("game-over").textContent !== "") return;
+      switch (e.key) {
+        case "ArrowLeft":
+          move(0); break;
+        case "ArrowUp":
+          move(1); break;
+        case "ArrowRight":
+          move(2); break;
+        case "ArrowDown":
+          move(3); break;
+      }
+    });
+
+    init();
+  </script>
+</body>
+</html>

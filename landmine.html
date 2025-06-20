@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>?? Landmine Game</title>
+  <style>
+    :root {
+      --bg: #f0f4f8;
+      --cell: #d1d5db;
+      --safe: #4ade80;
+      --mine: #f87171;
+      --text: #333;
+    }
+    body.dark {
+      --bg: #1e293b;
+      --cell: #334155;
+      --safe: #22c55e;
+      --mine: #ef4444;
+      --text: #f8fafc;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+      transition: background 0.3s, color 0.3s;
+    }
+    h1 { margin-bottom: 10px; }
+    #controls {
+      margin: 10px 0;
+    }
+    #game {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(30px, 1fr));
+      max-width: 400px;
+      margin: 15px auto;
+      gap: 4px;
+    }
+    .cell {
+      width: 100%;
+      aspect-ratio: 1;
+      background-color: var(--cell);
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: bold;
+      color: var(--text);
+      cursor: pointer;
+    }
+    .cell.revealed { cursor: default; }
+    .cell.safe { background-color: var(--safe); }
+    .cell.mine { background-color: var(--mine); color: white; }
+    button, select {
+      margin: 5px;
+      padding: 8px 14px;
+      font-size: 14px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    button { background: #3b82f6; color: white; }
+    .toggle-btn { background: #64748b; color: white; }
+    #info {
+      margin-top: 10px;
+      font-size: 16px;
+    }
+    #status {
+      margin-top: 10px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Landmine Game</h1>
+  <div id="controls">
+    <select id="difficulty">
+      <option value="easy"> Easy (6x6)</option>
+      <option value="medium" selected> Medium (8x8)</option>
+      <option value="hard"> Hard (10x10)</option>
+    </select>
+    <button onclick="initGame()"> Restart</button>
+    <button class="toggle-btn" onclick="toggleDark()"> Dark Mode</button>
+  </div>
+  <div id="info">
+     Time: <span id="timer">1</span> sec | 
+     Score: <span id="score">1</span> | 
+     Best: <span id="highScore">1</span>
+  </div>
+  <div id="status"></div>
+  <div id="game"></div>
+
+  <script>
+    let rows, cols, mines;
+    let board = [];
+    let gameOver = false;
+    let revealed = 0;
+    let score = 0;
+    let startTime, timerInterval;
+    let firstClick = true;
+
+    function getSettings() {
+      const diff = document.getElementById("difficulty").value;
+      if (diff === "easy") return { rows: 6, cols: 6, mines: 5 };
+      if (diff === "hard") return { rows: 10, cols: 10, mines: 20 };
+      return { rows: 8, cols: 8, mines: 10 }; // medium
+    }
+
+    function initGame() {
+      const game = document.getElementById("game");
+      game.innerHTML = "";
+      document.getElementById("status").textContent = "";
+      board = [];
+      gameOver = false;
+      revealed = 0;
+      score = 0;
+      firstClick = true;
+      clearInterval(timerInterval);
+      document.getElementById("timer").textContent = 0;
+      document.getElementById("score").textContent = 0;
+
+      const settings = getSettings();
+      rows = settings.rows;
+      cols = settings.cols;
+      mines = settings.mines;
+      game.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+      for (let r = 0; r < rows; r++) {
+        board[r] = [];
+        for (let c = 0; c < cols; c++) {
+          board[r][c] = { mine: false, revealed: false, count: 0, element: null };
+        }
+      }
+
+      // UI buttons
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const btn = document.createElement("button");
+          btn.className = "cell";
+          btn.onclick = () => handleClick(r, c);
+          board[r][c].element = btn;
+          game.appendChild(btn);
+        }
+      }
+
+      loadHighScore();
+    }
+
+    function placeMines(skipR, skipC) {
+      let placed = 0;
+      while (placed < mines) {
+        const r = Math.floor(Math.random() * rows);
+        const c = Math.floor(Math.random() * cols);
+        if ((r === skipR && c === skipC) || board[r][c].mine) continue;
+        board[r][c].mine = true;
+        placed++;
+      }
+
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          if (!board[r][c].mine) {
+            board[r][c].count = countMinesAround(r, c);
+          }
+        }
+      }
+    }
+
+    function countMinesAround(r, c) {
+      let count = 0;
+      for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+          const nr = r + dr, nc = c + dc;
+          if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
+            if (board[nr][nc].mine) count++;
+          }
+        }
+      }
+      return count;
+    }
+
+    function handleClick(r, c) {
+      if (gameOver || board[r][c].revealed) return;
+
+      if (firstClick) {
+        placeMines(r, c);
+        startTimer();
+        firstClick = false;
+      }
+
+      reveal(r, c);
+    }
+
+    function reveal(r, c) {
+      const cell = board[r][c];
+      if (cell.revealed || gameOver) return;
+
+      cell.revealed = true;
+      cell.element.classList.add("revealed");
+
+      if (cell.mine) {
+        cell.element.textContent = "??";
+        cell.element.classList.add("mine");
+        endGame(false);
+        return;
+      }
+
+      cell.element.classList.add("safe");
+      score++;
+      document.getElementById("score").textContent = score;
+      cell.element.textContent = cell.count > 0 ? cell.count : "";
+      revealed++;
+
+      if (cell.count === 0) {
+        for (let dr = -1; dr <= 1; dr++) {
+          for (let dc = -1; dc <= 1; dc++) {
+            const nr = r + dr, nc = c + dc;
+            if (nr >= 0 && nr < rows && nc >= 0 && nc < cols) {
+              reveal(nr, nc);
+            }
+          }
+        }
+      }
+
+      if (revealed === rows * cols - mines) {
+        endGame(true);
+      }
+    }
+
+    function endGame(won) {
+      gameOver = true;
+      clearInterval(timerInterval);
+      document.getElementById("status").textContent = won ? "?? You Win!" : "?? You hit a mine!";
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const cell = board[r][c];
+          if (cell.mine && !cell.revealed) {
+            cell.element.textContent = "??";
+            cell.element.classList.add("mine");
+          }
+        }
+      }
+      if (won) saveHighScore(score);
+    }
+
+    function startTimer() {
+      startTime = Date.now();
+      timerInterval = setInterval(() => {
+        const sec = Math.floor((Date.now() - startTime) / 1000);
+        document.getElementById("timer").textContent = sec;
+      }, 1000);
+    }
+
+    function toggleDark() {
+      document.body.classList.toggle("dark");
+    }
+
+    function saveHighScore(score) {
+      const key = "landmine-highscore-" + document.getElementById("difficulty").value;
+      const current = parseInt(localStorage.getItem(key)) || 0;
+      if (score > current) {
+        localStorage.setItem(key, score);
+        loadHighScore();
+      }
+    }
+
+    function loadHighScore() {
+      const key = "landmine-highscore-" + document.getElementById("difficulty").value;
+      const best = parseInt(localStorage.getItem(key)) || 0;
+      document.getElementById("highScore").textContent = best;
+    }
+
+    document.getElementById("difficulty").addEventListener("change", initGame);
+    initGame();
+  </script>
+</body>
+</html>
